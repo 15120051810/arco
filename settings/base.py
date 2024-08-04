@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'corsheaders',
     # 三方APP
     'rest_framework',
     'rest_framework_simplejwt',
@@ -52,14 +53,20 @@ INSTALLED_APPS = [
     "apps.users",
     "apps.system_manage",
     "apps.download_center",
-    "apps.log"
+    "apps.log",
+    "apps.arco_demo"
 ]
 
 AUTH_USER_MODEL = 'users.User'
+# CORS_ALLOW_ALL_ORIGINS = True # 这将允许来自任何源的请求，测试环境可以打开，但在生产环境中应该禁用。
 
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:6888",  # 你的前端开发服务器地址
+    "https://example.com",    # 你的生产环境地址
+]
 
 MIDDLEWARE = [
-    # 'corsheaders.middleware.CorsMiddleware',  # 跨域放在中间件第一个
+    'corsheaders.middleware.CorsMiddleware',  # 后端解决跨域 跨域放在中间件第一个 !!注释钓的话就不用解决跨域问题了
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -207,9 +214,9 @@ REST_FRAMEWORK = {
     # 2.权限配置（全局）： 顺序靠上的严格（根据不同的用户角色，可以操作不同的表）
     "DEFAULT_PERMISSION_CLASSES": (
         # 'rest_framework.permissions.IsAdminUser', # 管理员可以访问
-        'rest_framework.permissions.IsAuthenticated',  # 认证用户可以访问
+        # 'rest_framework.permissions.IsAuthenticated',  # 认证用户可以访问
         # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',  # 认证用户可以访问, 否则只能读取
-        # 'rest_framework.permissions.AllowAny',  # 所有用户都可以访问
+        'rest_framework.permissions.AllowAny',  # 所有用户都可以访问
     ),
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.AutoSchema',
 
