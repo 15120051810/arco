@@ -9,12 +9,19 @@ https://docs.djangoproject.com/en/4.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.1/ref/settings/
 """
-
+import os
+import sys
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+sys.path.insert(0, os.path.join(BASE_DIR, 'apps'))
+
+LOG_DIR = os.path.abspath(os.path.join(BASE_DIR, 'logs'))
+
+if not os.path.exists(LOG_DIR):
+    os.mkdir(LOG_DIR)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/4.1/howto/deployment/checklist/
@@ -23,10 +30,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-8h8xdz$__20nht@k#=w5i-z#!81is3rbx5_unc)2k^^jo96^ww'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['*']
 
 # Application definition
 
@@ -37,9 +42,24 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # 三方APP
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
+
+    # 用户自定义
+    "apps.users",
+    "apps.system_manage",
+    "apps.download_center",
+    "apps.log"
 ]
 
+AUTH_USER_MODEL = 'users.User'
+
+
 MIDDLEWARE = [
+    # 'corsheaders.middleware.CorsMiddleware',  # 跨域放在中间件第一个
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -47,6 +67,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    # 如果有其他依赖于用户身份验证的中间件，它们应该在你的自定义中间件之后执行
+    'libs.middleware.CheckTokenMiddleware'  # 添加中间件
+
 ]
 
 ROOT_URLCONF = 'arco.urls'
@@ -69,16 +92,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'arco.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 
 # Password validation
@@ -99,18 +114,76 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/4.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
+LANGUAGE_CODE = 'zh-hans'
+TIME_ZONE = 'Asia/Shanghai'
 
 USE_I18N = True
+USE_TZ = False
 
-USE_TZ = True
-
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    'loggers': {
+        'arco': {
+            'handlers': ['console', 'file'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+        'middleware': {
+            'handlers': ['console', 'middleware_file'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+        'refresh': {
+            'handlers': ['console', 'refresh_file'],
+            'propagate': True,
+            'level': 'INFO',
+        },
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG",
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, "logs/log.log"),
+            'when': 'MIDNIGHT',
+            'backupCount': 10,
+            'formatter': 'verbose'
+        },
+        'middleware_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, "logs/middleware.log"),
+            'when': 'MIDNIGHT',
+            'backupCount': 10,
+            'formatter': 'verbose'
+        },
+        'refresh_file': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(BASE_DIR, "logs/refresh.log"),
+            'when': 'MIDNIGHT',
+            'backupCount': 10,
+            'formatter': 'verbose'
+        }
+    },
+    "formatters": {
+        "verbose": {
+            "format": "%(levelname)s %(asctime)s %(module)s %(lineno)d %(message)s"
+        },
+        # 'standard': {
+        #     'format': '{"time": "%(asctime)s", "level": "%(levelname)s", "method": "%(method)s", "username": "%(username)s", "sip": "%(sip)s", "dip": "%(dip)s", "path": "%(path)s", "status_code": "%(status_code)s", "reason_phrase": "%(reason_phrase)s", "func": "%(module)s.%(funcName)s:%(lineno)d",  "message": "%(message)s"}',
+        #     'datefmt': '%Y-%m-%d %H:%M:%S'
+        # }
+    },
+}
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
@@ -121,3 +194,69 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+REST_FRAMEWORK = {
+    'EXCEPTION_HANDLER': 'libs.exceptions.exception_handler',  # 自定义全局捕获异常
+
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.BasicAuthentication'
+    ),
+
+    # 2.权限配置（全局）： 顺序靠上的严格（根据不同的用户角色，可以操作不同的表）
+    "DEFAULT_PERMISSION_CLASSES": (
+        # 'rest_framework.permissions.IsAdminUser', # 管理员可以访问
+        'rest_framework.permissions.IsAuthenticated',  # 认证用户可以访问
+        # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',  # 认证用户可以访问, 否则只能读取
+        # 'rest_framework.permissions.AllowAny',  # 所有用户都可以访问
+    ),
+    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.AutoSchema',
+
+    # 过滤后端设置
+    'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
+}
+
+from datetime import timedelta
+
+
+# 使用滑动 Token
+
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+#     'ROTATE_REFRESH_TOKENS': True,
+#     'BLACKLIST_AFTER_ROTATION': True,
+#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.SlidingToken',),
+#     'TOKEN_TYPE_CLAIM': 'sliding',
+# }
+
+# 使用的是 双Token
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=7,seconds=60),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    # 当设置为 时True，如果将刷新令牌提交给 TokenRefreshView，则将返回新的刷新令牌以及新的访问令牌。此新刷新令牌将通过 JSON 响应中的“refresh”键提供。
+
+    "AUTH_HEADER_TYPES": ("Bearer",),  # 请求头要包含Bearer
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",  # 请求头要包含 Authorization
+
+    # 当设置为 时True，auth_user 表中的 last_login 字段会在登录时更新（TokenObtainPairView）。
+    "UPDATE_LAST_LOGIN": True,
+
+    "BLACKLIST_AFTER_ROTATION": True,
+
+    # 默认的 认证登录返回的序列化数据
+    # "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",
+
+    # 自定义 认证登录返回的序列化数据 # https://django-rest-framework-simplejwt.readthedocs.io/en/latest/customizing_token_claims.html
+    "TOKEN_OBTAIN_SERIALIZER": "libs.auth.MyTokenObtainPairSerializer",
+
+    # 刷新token
+    'TOKEN_REFRESH_SERIALIZER': 'rest_framework_simplejwt.serializers.TokenRefreshSerializer',
+
+    # 验证token
+    "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
+
+}
