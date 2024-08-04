@@ -18,5 +18,7 @@ from django.urls import path, include
 
 urlpatterns = [
     # path('admin/', admin.site.urls),
-    path('api/', include('arco_demo.urls'))
+    path('api/', include('arco_demo.urls')),
+    path('api/system_manage/', include("system_manage.urls", namespace="system_manage")),  # 系统管理
+
 ]
