@@ -2,13 +2,13 @@ import django_filters
 from users.models import Router, Api, Org, Role
 
 
-class OrgInfoFilter(django_filters.rest_framework.FilterSet):
+class OrgFilter(django_filters.rest_framework.FilterSet):
+    org_id = django_filters.CharFilter(field_name='org_id', lookup_expr='exact', label='组织id')
     org_name = django_filters.CharFilter(field_name='org_name', label='组织名称')
-    org_type = django_filters.CharFilter(field_name='org_type', label='组织类型')
 
     class Meta:
         model = Org
-        fields = ['org_name', 'org_type']
+        fields = ['org_name','org_id']
 
 
 class RoleInfoFilter(django_filters.rest_framework.FilterSet):

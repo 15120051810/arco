@@ -76,6 +76,7 @@ class ViewLogManager(models.Manager):
 class ViewLog(models.Model):
     """
     浏览日志，记录用户浏览记录
+    使用viewset 一个地址有多个请求，最好把请求方法也加到日志里
     """
     ACTION_TYPE = (
         ('V', '浏览'),

@@ -21,7 +21,7 @@ class CheckTokenMiddleware(MiddlewareMixin):
         处理请求前
         在 Django 调用视图之前调用。应返回 None 或 HttpResponse 对象。
         """
-        print("Request is being processed")
+        # print("Request is being processed")
 
         auth_header = request.headers.get('Authorization')
         if auth_header and auth_header.startswith('Bearer '):
@@ -35,7 +35,6 @@ class CheckTokenMiddleware(MiddlewareMixin):
                 # If token is valid, store the user information in the request
                 request.user_id = access_token['user_id']
             except (TokenError, InvalidToken):
-
                 data = {'code': '300', 'msg': 'Token is invalid or expired'}
                 return JsonResponse(data=data, status=status.HTTP_202_ACCEPTED)
         return None
@@ -49,10 +48,10 @@ class CheckTokenMiddleware(MiddlewareMixin):
         :param view_kwargs:
         :return:
         """
-        print("View is being processed")
+        # print("View is being processed")
         return None
 
     def process_response(self, request, response):
         """处理响应前"""
-        print("Response is being processed")
+        # print("Response is being processed")
         return response

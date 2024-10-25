@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/4.1/ref/settings/
 import os
 import sys
 from pathlib import Path
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django_filters',  # 需要注册应用，
 
     'corsheaders',
     # 三方APP
@@ -155,6 +157,7 @@ LOGGING = {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
+            # 'encoding': 'utf-8'  # 确保编码为 UTF-8
         },
         'file': {
             'level': 'DEBUG',
@@ -196,47 +199,53 @@ LOGGING = {
 # https://docs.djangoproject.com/en/4.1/howto/static-files/
 
 STATIC_URL = 'static/'
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static_files'),
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# AUTHENTICATION_BACKENDS = [
+#     'django.contrib.auth.backends.ModelBackend',
+# ]
+
+# 配置DRF
 REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'libs.exceptions.exception_handler',  # 自定义全局捕获异常
 
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.BasicAuthentication'
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # 使用rest_framework_simplejwt验证身份
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.BasicAuthentication'
     ),
 
     # 2.权限配置（全局）： 顺序靠上的严格（根据不同的用户角色，可以操作不同的表）
     "DEFAULT_PERMISSION_CLASSES": (
         # 'rest_framework.permissions.IsAdminUser', # 管理员可以访问
-        # 'rest_framework.permissions.IsAuthenticated',  # 认证用户可以访问
+        'rest_framework.permissions.IsAuthenticated',  # 认证用户可以访问  默认
         # 'rest_framework.permissions.IsAuthenticatedOrReadOnly',  # 认证用户可以访问, 否则只能读取
-        'rest_framework.permissions.AllowAny',  # 所有用户都可以访问
+        # 'rest_framework.permissions.AllowAny',  # 所有用户都可以访问
+        # Use Django's standard `django.contrib.auth` permissions,or allow read-only access for unauthenticated users.
+        # 'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
     ),
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.AutoSchema',
 
     # 过滤后端设置
     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
+
+    # 使用该类构造响应对象时
+    # 'DEFAULT_RENDERER_CLASSES': (  # 默认响应渲染类
+    #     'rest_framework.renderers.JSONRenderer',  # json渲染器
+    #     'rest_framework.renderers.BrowsableAPIRenderer',  # 浏览API渲染器
+    # )
+
 }
 
-from datetime import timedelta
+############# 配置simpleJwt
 
-
-# 使用滑动 Token
-
-# SIMPLE_JWT = {
-#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
-#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-#     'ROTATE_REFRESH_TOKENS': True,
-#     'BLACKLIST_AFTER_ROTATION': True,
-#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.SlidingToken',),
-#     'TOKEN_TYPE_CLAIM': 'sliding',
-# }
 
 # 使用的是 双Token
 
@@ -267,3 +276,14 @@ SIMPLE_JWT = {
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
 
 }
+
+# 使用滑动 Token
+
+# SIMPLE_JWT = {
+#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
+#     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+#     'ROTATE_REFRESH_TOKENS': True,
+#     'BLACKLIST_AFTER_ROTATION': True,
+#     'AUTH_TOKEN_CLASSES': ('rest_framework_simplejwt.tokens.SlidingToken',),
+#     'TOKEN_TYPE_CLAIM': 'sliding',
+# }

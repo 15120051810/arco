@@ -18,7 +18,7 @@ from django.db.models import Q
 from download_center.models import DownLoadCenter
 from django.conf import settings
 from log.models import ViewLog
-from system_manage.serializers import OrgTreeSerializer
+from system_manage.org_manage_serializers import OrgTreeSerializer
 from datetime import datetime, timedelta
 
 BASE_KEYWORD = "big_data_app_product"

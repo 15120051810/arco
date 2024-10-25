@@ -8,57 +8,6 @@ from users.models import Router, Api, User, Org, Role, ChannelShop, Departmental
 from rest_framework import serializers
 
 
-class OrdinaryOrgSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Org
-        fields = "__all__"
-
-
-class OrgChildSerializer(serializers.ModelSerializer):
-    children = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Org
-        fields = '__all__'
-        depth = 1
-
-    def get_children(self, obj):
-        if obj.children:
-            return OrgChildSerializer(obj.children, many=True).data
-        return None
-
-
-class OrgTreeSerializer(serializers.ModelSerializer):
-    children = OrgChildSerializer(many=True)
-
-    class Meta:
-        model = Org
-        fields = '__all__'
-        depth = 1
-
-
-class OrgTwoTreeSerializer(serializers.ModelSerializer):
-    children = serializers.SerializerMethodField()
-    key = serializers.SerializerMethodField(source='org_id')
-    title = serializers.SerializerMethodField(source='org_name')
-
-    class Meta:
-        model = Org
-        fields = ('children', 'key', 'title', 'org_type', 'org_id', 'org_name')
-
-    def get_children(self, obj):
-        if (obj.org_type in (1, 2) and obj.children.all()) or obj.org_name == '圆心科技':
-            res = OrgTwoTreeSerializer(obj.children.filter(org_type__in=(1, 2)), many=True).data
-            return res if res else []
-        return []
-
-    def get_key(self, obj):
-        return obj.org_id
-
-    def get_title(self, obj):
-        return "全国" if obj.org_name == '圆心科技' else obj.org_name
-
-
 class UserSerializer(serializers.ModelSerializer):
     last_login = serializers.DateTimeField(format="%Y-%m-%d %H:%M:%S", required=False, read_only=True)
 
