@@ -246,6 +246,7 @@ class Router(models.Model):
     parent = models.ForeignKey('self', null=True, blank=True, verbose_name='父路由',
                                related_name='children', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
     class Meta:
         verbose_name = '菜单管理'

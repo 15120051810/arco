@@ -1,14 +1,16 @@
 from django.conf import settings
 from django.urls import path, include
-from system_manage.views import RouterViewSet
 from rest_framework.routers import SimpleRouter
 from system_manage.org_manage_views import OrgManageTreeViewSet
+from system_manage.router_manage_views import RouterManageTreeViewSet
+
 from rest_framework_extensions.routers import (ExtendedDefaultRouter as DefaultRouter)
 
 app_name = "system_manage"
 
 router = DefaultRouter() if settings.DEBUG else SimpleRouter()
 router.register("org", OrgManageTreeViewSet)
+router.register("router", RouterManageTreeViewSet)
 
 # 注册后，router.register 会为 OrgManageTreeViewSet 创建以下默认路由：
 # GET /api/system_manage/org/ - 列出所有组织 list

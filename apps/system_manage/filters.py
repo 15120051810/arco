@@ -11,6 +11,13 @@ class OrgFilter(django_filters.rest_framework.FilterSet):
         fields = ['org_name','org_id']
 
 
+class RouterFilter(django_filters.rest_framework.FilterSet):
+    title = django_filters.CharFilter(field_name='title', lookup_expr='icontains', label='菜单标题')
+
+    class Meta:
+        model = Router
+        fields = ['title']
+
 class RoleInfoFilter(django_filters.rest_framework.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains', label='角色名称')
 
