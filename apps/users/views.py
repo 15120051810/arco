@@ -142,8 +142,6 @@ class UserMenu(APIView):
             }
         ]
 
-
-
         res = {
             "data": menuList,
             "status": 'ok',

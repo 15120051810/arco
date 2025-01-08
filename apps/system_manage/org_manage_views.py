@@ -7,7 +7,7 @@
 import logging
 import json
 from rest_framework import status
-
+from django.conf import settings
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
 from django.http import JsonResponse
@@ -42,7 +42,7 @@ class OrgManageTreeViewSet(ModelViewSet):
     def get_queryset(self):
         org_name = self.request.query_params.get('org_name', None)
         if self.action == 'list' and not org_name:  # 初始化页面的时候展示组织树
-            return self.queryset.filter(org_name='圆心科技')
+            return self.queryset.filter(org_name=settings.TOP_ORG_NAME)
         return self.queryset
 
     def org_type(self, request, *args, **kwargs):

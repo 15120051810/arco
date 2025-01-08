@@ -15,7 +15,7 @@ class OrgFlattenSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Org
-        fields = '__all__'
+        exclude = ('created_at',)
 
 
 class OrgTreeSerializer(serializers.ModelSerializer):

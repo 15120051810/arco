@@ -1,5 +1,5 @@
 import django_filters
-from users.models import Router, Api, Org, Role
+from users.models import Router, User, Org, Role
 
 
 class OrgFilter(django_filters.rest_framework.FilterSet):
@@ -11,6 +11,14 @@ class OrgFilter(django_filters.rest_framework.FilterSet):
         fields = ['org_name','org_id']
 
 
+class UserFilter(django_filters.rest_framework.FilterSet):
+    name = django_filters.CharFilter(field_name='name', lookup_expr='icontains', label='用户名称')
+
+    class Meta:
+        model = User
+        fields = ['name']
+
+
 class RouterFilter(django_filters.rest_framework.FilterSet):
     title = django_filters.CharFilter(field_name='title', lookup_expr='icontains', label='菜单标题')
 
@@ -18,26 +26,10 @@ class RouterFilter(django_filters.rest_framework.FilterSet):
         model = Router
         fields = ['title']
 
-class RoleInfoFilter(django_filters.rest_framework.FilterSet):
+class RoleFilter(django_filters.rest_framework.FilterSet):
     name = django_filters.CharFilter(field_name='name', lookup_expr='icontains', label='角色名称')
 
     class Meta:
         model = Role
         fields = ['name']
 
-
-class RouterInfoFilter(django_filters.rest_framework.FilterSet):
-    title = django_filters.CharFilter(field_name='title', label='页面标题')
-    system = django_filters.NumberFilter(field_name='system', label='系统类型')
-
-    class Meta:
-        model = Router
-        fields = ['title', 'system']
-
-
-class ApiInfoFilter(django_filters.rest_framework.FilterSet):
-    name = django_filters.CharFilter(field_name='name', label='API名称')
-
-    class Meta:
-        model = Api
-        fields = ['name']

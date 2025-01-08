@@ -244,6 +244,10 @@ REST_FRAMEWORK = {
 
 }
 
+## 顶层机构名称
+TOP_ORG_NAME = '圆心科技'
+
+
 ############# 配置simpleJwt
 
 

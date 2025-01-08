@@ -4,6 +4,8 @@ from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
 
 
+# 有外键的是从表，多对多没有主从之分
+
 class Org(models.Model):
     org_type_choices = (
         (1, "大区"),
@@ -152,21 +154,22 @@ class MedicalWorkerDP(models.Model):
 
 class User(AbstractUser):
     """用户"""
-
-    name = models.CharField(blank=True, max_length=255, verbose_name='姓名')
-    email = models.EmailField(blank=True, max_length=128, verbose_name='邮箱地址', null=True)
+    name = models.CharField(blank=True, max_length=255, db_comment='姓名')
+    email = models.EmailField(blank=True, max_length=128, db_comment='邮箱地址', null=True)
 
     roles = models.ManyToManyField('Role', blank=True, verbose_name='角色', related_name='role_users')
-    orgs = models.ManyToManyField('Org', blank=True, verbose_name='组织', related_name='users')
+    orgs = models.ManyToManyField('Org', through='UserOrg', verbose_name='组织', related_name='org_users')
     channel_shop = models.ManyToManyField('ChannelShop', blank=True, verbose_name='渠道店铺',
                                           related_name='channel_shop')
     departmental_project = models.ManyToManyField('DepartmentalProject', blank=True, verbose_name='部门项目',
                                                   related_name='departmental_project')
     medical_worker_dp = models.ManyToManyField('MedicalWorkerDP', blank=True, verbose_name='医工部门项目',
-                                                  related_name='medical_worker_dp')
-    staff_code = models.CharField(blank=True, max_length=128, verbose_name='工号', null=True)
-    home_page = models.ForeignKey('Router', blank=True, null=True, verbose_name='首页', on_delete=models.SET_NULL)
-    mobile = models.CharField(blank=True, max_length=128, verbose_name='手机号', null=True)
+                                               related_name='medical_worker_dp')
+    staff_code = models.CharField(blank=True, max_length=128, db_comment='工号', null=True)
+    home_page = models.ForeignKey('Router', blank=True, null=True, db_comment='首页', on_delete=models.SET_NULL)
+    mobile = models.CharField(blank=True, max_length=128, db_comment='手机号', null=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_comment='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, db_comment='更新时间')
 
     class Meta:
         verbose_name = '用户管理'
@@ -185,6 +188,24 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.name if self.name else self.username
+
+
+class UserOrg(models.Model):
+    """
+    定义中间模型 UserOrg，用来表示用户与组织之间的关系
+    此模型允许我们为多对多关系添加额外的字段
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    org = models.ForeignKey(Org, on_delete=models.CASCADE)
+    # name = models.CharField(max_length=228, verbose_name='组织名称', blank=True)
+    selected = models.BooleanField(default=False, verbose_name='选中')
+    half_selected = models.BooleanField(default=False, verbose_name='半选')
+    org_parent_id = models.IntegerField(null=True)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True,
+                                           related_name='children')
+
+    class Meta:
+        unique_together = ('user', 'org')
 
 
 class Api(models.Model):
@@ -265,13 +286,20 @@ class Role(models.Model):
     """
         角色管理
     """
+    system_choices = (
+        (0, 'PC端'),
+        (1, '移动端'),
+    )
+
     name = models.CharField(max_length=150, unique=True, verbose_name='角色名称')
     routers = models.ManyToManyField(Router, blank=True, verbose_name='菜单', related_name='roles',
                                      help_text='左侧菜单，用来控制显示还是不显示')
     # apis = models.ManyToManyField(Api, blank=True, verbose_name='API', related_name='api_roles',
     #                               help_text='用做开放给外部程序调用接口的授权，可不填！')
     remarks = models.TextField(null=True, blank=True, verbose_name='备注')
+    type = models.SmallIntegerField(choices=system_choices, default=0, verbose_name='所属系统')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
+    updated_at = models.DateTimeField(auto_now=True, verbose_name='更新时间')
 
     class Meta:
         verbose_name = '角色管理'
