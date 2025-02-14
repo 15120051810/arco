@@ -8,7 +8,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings.local')
 django.setup()
 
 from django_redis import get_redis_connection
-from system_manage.serializers import OrgTreeSerializer, OrdinaryOrgSerializer
+from system_manage.org_manage_serializers import OrgTreeSerializer, OrgFlattenSerializer
 from loguru import logger
 from users.models import Org
 import datetime
@@ -62,7 +62,7 @@ def synchronization_org_info():
                     logger.info(f"更新成功 --- {org}")
 
                 qs = Org.objects.all().order_by('order_index')
-                resp = OrdinaryOrgSerializer(qs, many=True)
+                resp = OrgFlattenSerializer(qs, many=True)
                 resp_tree = OrgTreeSerializer(qs.filter(org_type__isnull=True, org_name="圆心科技"), many=True)
                 orgs_list = json.dumps(resp.data)
                 orgs_tree = json.dumps(resp_tree.data)

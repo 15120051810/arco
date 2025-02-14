@@ -26,7 +26,7 @@ CACHES = {
             # Mimicing memcache behavior.
             # https://github.com/jazzband/django-redis#memcached-exceptions-behavior
             "IGNORE_EXCEPTIONS": True,
-            "PASSWORD":"515079",
+            # "PASSWORD":"515079",
             "MAX_ENTRIES": 300,  # 删除旧数据之前，允许在缓存中存放的最大数量，默认：300
         },
     }

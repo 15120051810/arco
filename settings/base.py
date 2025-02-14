@@ -141,6 +141,11 @@ LOGGING = {
             'propagate': True,
             'level': 'INFO',
         },
+        # 'django.db.backends': {
+        #     'handlers': ['console', 'file'],  # 数据库的 日志记录
+        #     'level': 'DEBUG',  # 日志级别
+        #     'propagate': False,
+        # },
         'middleware': {
             'handlers': ['console', 'middleware_file'],
             'propagate': True,

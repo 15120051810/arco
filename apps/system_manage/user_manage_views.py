@@ -49,15 +49,10 @@ class UserManageViewSet(ModelViewSet):
 
     @viewlog('U', '更新用户')
     def update(self, request, *args, **kwargs):
-        """重写只为记录操作日志"""
-
         partial = kwargs.pop('partial', False)
         # self.get_object() 的作用是获取当前视图正在操作的模型实例。具体来说，它会根据请求的参数（通常是 URL 中的主键 pk 或其他唯一标识字段）来查找对应的对象
         instance = self.get_object()
-
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-
         serializer.save(check_org_list=request.data.get('orgs'),org_change_flag=request.data.get('orgChangeFlag'))
-
         return Response(serializer.data)

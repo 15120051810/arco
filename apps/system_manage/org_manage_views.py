@@ -39,6 +39,13 @@ class OrgManageTreeViewSet(ModelViewSet):
     # search_fields = ['org_name', 'org_id']  # 模糊搜索，结合 SearchFilter，路由格式 /api/system_manage/org/?search=广东，广东就会在org_name, org_id这两个字段中去查询
     # filterset_class = OrgFilter  # 更复杂的查询场景下用 例如有的字段需要范围查询等等
 
+
+    def _clear_redis(self):
+        """编辑删除或者创建的时候，先清空之前的缓存"""
+        res = redis_cli.get('top_org_tree')
+        if res:
+            redis_cli.delete('top_org_tree')
+
     def get_queryset(self):
         org_name = self.request.query_params.get('org_name', None)
         if self.action == 'list' and not org_name:  # 初始化页面的时候展示组织树
@@ -52,15 +59,40 @@ class OrgManageTreeViewSet(ModelViewSet):
 
         return JsonResponse(dict(Org.org_type_choices))
 
+    # def list(self, request, *args, **kwargs):
+    #     print('request',request)
+    #     return super(OrgManageTreeViewSet, self).list(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        """重写list"""
+        org_name = self.request.query_params.get('org_name', None)
+        queryset = self.filter_queryset(self.get_queryset())
+        logger.info(f"当前查询集-->{queryset}")
+
+        serializer = self.get_serializer(queryset, many=True)
+
+        if org_name:
+            return Response(serializer.data)
+
+        res = redis_cli.get('top_org_tree')
+        if res:
+            return Response(json.loads(res))
+        else:
+            data = serializer.data
+            redis_cli.set('top_org_tree',json.dumps(data))
+            return Response(data)
+
     @viewlog('I', '添加组织')
     def create(self, request, *args, **kwargs):
-        """重写只为记录操作之日"""
+        self._clear_redis()
         return super(OrgManageTreeViewSet, self).create(request, *args, **kwargs)
 
     @viewlog('D', '删除组织')
     def destroy(self, request, *args, **kwargs):
+        self._clear_redis()
         return super(OrgManageTreeViewSet, self).destroy(request, *args, **kwargs)
 
     @viewlog('U', '更新组织')
     def update(self, request, *args, **kwargs):
+        self._clear_redis()
         return super(OrgManageTreeViewSet, self).update(request, *args, **kwargs)

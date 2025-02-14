@@ -6,13 +6,17 @@
 """
 from django.db import models
 import logging
-
+import json
 from django.conf import settings
 from users.models import Role, User, Org, Router, UserOrg
 from rest_framework import serializers
 from .role_manage_serializers import RoleSerializer
 from .org_manage_serializers import OrgFlattenSerializer, OrgTreeSerializer
 from .router_manage_serializers import RouterFlattenSerializer
+from django_redis import get_redis_connection
+
+
+redis_cli = get_redis_connection('default')
 
 logger = logging.getLogger('arco')
 
@@ -83,9 +87,17 @@ class UserSerializer(serializers.ModelSerializer):
         """动态生成用户的组织树"""
         # 获取用户的根组织（即 parent=None 的 UserOrg）
         root_nodes = UserOrg.objects.filter(user=obj, parent=None)
-
+        username = obj.username
         # 序列化根组织及其子树
-        return UserOrgSerializer(root_nodes, many=True).data
+        logger.info(f'开始序列化用户 {username} ')
+        res = redis_cli.get(f'org_tree_{username}')
+        if not res:
+            data = UserOrgSerializer(root_nodes, many=True).data
+            redis_cli.set(f'org_tree_{username}',json.dumps(data))
+        else:
+            res = redis_cli.get(f'org_tree_{username}')
+            data = json.loads(res)
+        return data
 
     def get_orgs_status(self, tree_data, check_orgs):
         """
@@ -206,8 +218,8 @@ class UserSerializer(serializers.ModelSerializer):
         """更新某个示例
         额外的用pop 从validated_data 剔除出来
         """
-
-        logger.info(f'已验证的数据 {validated_data}')
+        username = instance.username
+        logger.info(f'更新用户 {username} 已验证的数据 {validated_data}')
 
         check_org_list = validated_data.pop('check_org_list', [])
         org_change_flag = validated_data.pop('org_change_flag', False)  # 确定组织是否有更新
@@ -218,6 +230,12 @@ class UserSerializer(serializers.ModelSerializer):
             logger.info(f"已存在的组织-->{existing_orgs}")
             UserOrg.objects.filter(user_id=instance, id__in=existing_orgs).delete()
             logger.info(f"删除已存在的组织-->{existing_orgs}")
+
+            logger.info(f'更新用户 {username} ')
+
+            res = redis_cli.get(f'org_tree_{username}')
+            if res:
+                redis_cli.delete(f'org_tree_{username}')
 
             # 重新构建
             org_qs = Org.objects.filter(org_name=settings.TOP_ORG_NAME)
