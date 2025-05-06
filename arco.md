@@ -2,7 +2,7 @@
 
 1. Python3.10
 2. Django=5.0.4 支持mysql8(使用docker搭建)
-
+3. 本地起Reids
 
 # 需求
 

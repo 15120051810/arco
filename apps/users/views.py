@@ -6,14 +6,19 @@
 """
 
 import logging
+from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.request import Request
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import (
     TokenObtainPairView
 )
+
+from users.serializers import RouerTreeSerializer
+from system_manage.views import RouterViewSet
 from .serializers import UserSerializer
 from .models import Router
 
@@ -102,51 +107,24 @@ class UserLoginOutView(APIView):
         return Response(data=res)
 
 
-class UserMenu(APIView):
+class UserMenuView(APIView):
     """
     用户菜单
+    1 管理员 将菜单树与菜单列表返回
+    2 非管理员 将该用户对应的菜单树与菜单列表返回
     """
 
-    @viewlog('v', '获取菜单')
+    queryset = Router.objects.all().order_by('order_index')
+    serializer_class = RouerTreeSerializer
+    permission_classes = [IsAuthenticated]
+
     def post(self, request):
+        if self.request.user.is_superuser:
+            queryset = Router.objects.filter(type__range=[0, 1], system=0).order_by('order_index').distinct()
+        else:
+            queryset = Router.objects.filter(type__range=[0, 1], system=0,
+                                             roles__role_users=self.request.user).distinct()
+        logger.info(f"查询的菜单数据集--> {queryset}")
 
-        menuList = [
-            {
-                "path": '/dashboard',
-                "name": 'dashboard',
-                "meta": {
-                    "locale": 'menu.server.dashboard',
-                    "requiresAuth": True,
-                    "icon": 'icon-dashboard',
-                    "order": 1,
-                },
-                "children": [
-                    {
-                        "path": 'workplace',
-                        "name": 'Workplace',
-                        "meta": {
-                            "locale": 'menu.server.workplace',
-                            "requiresAuth": True,
-                        },
-                    }],
-            },
-            {
-                "path": '/dashboard',
-                "name": 'dashboard',
-                "meta": {
-                    "locale": 'menu.server.dashboard',
-                    "requiresAuth": True,
-                    "icon": 'icon-dashboard',
-                    "order": 1,
-                },
-            }
-        ]
-
-        res = {
-            "data": menuList,
-            "status": 'ok',
-            "msg": '请求成功',
-            "code": 20000,
-        }
-
-        return Response(data=res)
+        serializer = RouerTreeSerializer(instance=queryset, many=True)
+        return Response(data=serializer.data)

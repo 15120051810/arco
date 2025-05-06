@@ -10,7 +10,7 @@ from rest_framework.routers import SimpleRouter
 from rest_framework_extensions.routers import (ExtendedDefaultRouter as DefaultRouter)
 
 
-from .views import UserLoginView, UserInfoView, UserLoginOutView, UserMenu
+from .views import UserLoginView, UserInfoView, UserLoginOutView, UserMenuView
 
 app_name = "users"
 
@@ -19,7 +19,7 @@ router = DefaultRouter() if settings.DEBUG else SimpleRouter()
 urlpatterns = [
     path('user/login/', UserLoginView.as_view()),
     path('user/info/', UserInfoView.as_view()),
-    path('user/menu/', UserMenu.as_view()),
+    path('user/menu/', UserMenuView.as_view()),
     path('user/logout/', UserLoginOutView.as_view()),
 ]
 

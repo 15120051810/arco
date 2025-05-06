@@ -54,5 +54,6 @@ class UserManageViewSet(ModelViewSet):
         instance = self.get_object()
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
-        serializer.save(check_org_list=request.data.get('orgs'),org_change_flag=request.data.get('orgChangeFlag'))
+        # 调用save()方法可以额外传递数据，这些数据可以在create()和update()中的validated_data参数获取到
+        serializer.save(check_org_list=request.data.get('orgs'), org_change_flag=request.data.get('orgChangeFlag'))
         return Response(serializer.data)

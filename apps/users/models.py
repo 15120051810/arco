@@ -296,6 +296,7 @@ class Role(models.Model):
                                      help_text='左侧菜单，用来控制显示还是不显示')
     # apis = models.ManyToManyField(Api, blank=True, verbose_name='API', related_name='api_roles',
     #                               help_text='用做开放给外部程序调用接口的授权，可不填！')
+    keyword = models.CharField(max_length=228, null=True, blank=True, verbose_name='角色关键字')
     remarks = models.TextField(null=True, blank=True, verbose_name='备注')
     type = models.SmallIntegerField(choices=system_choices, default=0, verbose_name='所属系统')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')

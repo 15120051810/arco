@@ -22,7 +22,7 @@ from utils.api_paginator import PageNum
 from rest_framework import filters
 from django.db.models import Q
 from rest_framework.decorators import action
-from system_manage.filters import RouterInfoFilter, ApiInfoFilter, OrgFilter, RoleInfoFilter
+from system_manage.filters import OrgFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django_redis import get_redis_connection
 from utils.common import viewlog
@@ -53,32 +53,32 @@ class RouterViewSet(ListModelMixin, GenericViewSet):
 
 
 
-class PApiViewSet(ModelViewSet):
-    queryset = Api.objects.filter(parent__isnull=True).order_by('order_index')
-    serializer_class = ApiTreeSerializer
-    permission_classes = [IsAuthenticated, APIPermission]
-    pagination_class = PageNum
-    filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
-    filter_class = ApiInfoFilter
-
-    def get_serializer_class(self):
-        if self.request.method in ['POST', 'PUT']:
-            return EditApiSerializer
-        return ApiTreeSerializer
-
-    def get_queryset(self):
-        if self.request.query_params.get('name') or self.request.method in ['PUT', 'DELETE']:
-            queryset = Api.objects.all().order_by('order_index')
-        else:
-            queryset = Api.objects.filter(parent__isnull=True).order_by('order_index')
-        return queryset
-
-    # 获取所有的 Api 下拉列表...
-    @action(methods=['get'], detail=False)
-    def select(self, request, *args, **kwargs):
-        qs = Api.objects.filter().order_by('order_index')
-        resp = [{"id": i.id, "name": i.name, "abs_path": i.abs_path} for i in qs]
-        return Response(resp)
+# class PApiViewSet(ModelViewSet):
+#     queryset = Api.objects.filter(parent__isnull=True).order_by('order_index')
+#     serializer_class = ApiTreeSerializer
+#     permission_classes = [IsAuthenticated, APIPermission]
+#     pagination_class = PageNum
+#     filter_backends = (DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter)
+#     filter_class = ApiInfoFilter
+#
+#     def get_serializer_class(self):
+#         if self.request.method in ['POST', 'PUT']:
+#             return EditApiSerializer
+#         return ApiTreeSerializer
+#
+#     def get_queryset(self):
+#         if self.request.query_params.get('name') or self.request.method in ['PUT', 'DELETE']:
+#             queryset = Api.objects.all().order_by('order_index')
+#         else:
+#             queryset = Api.objects.filter(parent__isnull=True).order_by('order_index')
+#         return queryset
+#
+#     # 获取所有的 Api 下拉列表...
+#     @action(methods=['get'], detail=False)
+#     def select(self, request, *args, **kwargs):
+#         qs = Api.objects.filter().order_by('order_index')
+#         resp = [{"id": i.id, "name": i.name, "abs_path": i.abs_path} for i in qs]
+#         return Response(resp)
 
 
 class PChannelShopViewSet(ModelViewSet):
