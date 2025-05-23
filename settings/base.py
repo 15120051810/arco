@@ -77,7 +77,8 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 如果有其他依赖于用户身份验证的中间件，它们应该在你的自定义中间件之后执行
-    'libs.middleware.CheckTokenMiddleware'  # 添加中间件
+    'middlemares.token_middleware.CheckTokenMiddleware',  # 添加中间件
+    'middlemares.log_middleware.ThreadLocalMiddleware',  # 线程日志过滤器
 
 ]
 
@@ -132,6 +133,13 @@ TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
 USE_TZ = False
 
+
+# propagate = True：
+# 日志会传递给 父 logger，如果父 logger 有 handler，会再输出一遍日志。
+#
+# propagate = False：
+# 日志 只会在当前 logger 指定的 handler 中输出，不会继续向上层传播。
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -139,7 +147,7 @@ LOGGING = {
         'arco': {
             'handlers': ['console', 'file'],
             'propagate': True,
-            'level': 'INFO',
+            'level': 'DEBUG', # 日志级别
         },
         # 'django.db.backends': {
         #     'handlers': ['console', 'file'],  # 数据库的 日志记录
@@ -161,7 +169,9 @@ LOGGING = {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
-            "formatter": "verbose",
+            # "formatter": "verbose",
+            "formatter": "color", # 选中带颜色的
+            'filters': ['add_username_ip'],
             # 'encoding': 'utf-8'  # 确保编码为 UTF-8
         },
         'file': {
@@ -170,7 +180,8 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, "logs/log.log"),
             'when': 'MIDNIGHT',
             'backupCount': 10,
-            'formatter': 'verbose'
+            'formatter': 'verbose',
+            'filters': ['add_username_ip'],
         },
         'middleware_file': {
             'level': 'DEBUG',
@@ -178,20 +189,40 @@ LOGGING = {
             'filename': os.path.join(BASE_DIR, "logs/middleware.log"),
             'when': 'MIDNIGHT',
             'backupCount': 10,
-            'formatter': 'verbose'
-        },
+            'formatter': 'verbose',
+            'filters': ['add_username_ip'],
+},
         'refresh_file': {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
             'filename': os.path.join(BASE_DIR, "logs/refresh.log"),
             'when': 'MIDNIGHT',
             'backupCount': 10,
-            'formatter': 'verbose'
+            'formatter': 'verbose',
+            'filters': ['add_username_ip'],
         }
+    },
+    'filters': {
+        'add_username_ip': {
+            '()': 'libs.logging_filters.UsernameIpLoggingFilter',
+        },
     },
     "formatters": {
         "verbose": {
-            "format": "%(levelname)s %(asctime)s %(module)s %(lineno)d %(message)s"
+            "format": "%(username)s %(ip)s %(levelname)s %(asctime)s %(module)s %(lineno)d %(message)s "
+        },
+        # 带颜色的
+        "color": {
+            '()': 'colorlog.ColoredFormatter',
+            'format': '%(log_color)s [%(asctime)s] [%(levelname)s] %(username)s %(message)s',
+            'log_colors': {
+                'DEBUG': 'blue',
+                'INFO': 'green',
+                'WARNING': 'yellow',
+                'ERROR': 'red',
+                'CRITICAL': 'bold_red',
+            },
+            'style': '%',
         },
         # 'standard': {
         #     'format': '{"time": "%(asctime)s", "level": "%(levelname)s", "method": "%(method)s", "username": "%(username)s", "sip": "%(sip)s", "dip": "%(dip)s", "path": "%(path)s", "status_code": "%(status_code)s", "reason_phrase": "%(reason_phrase)s", "func": "%(module)s.%(funcName)s:%(lineno)d",  "message": "%(message)s"}',

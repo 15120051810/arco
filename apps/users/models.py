@@ -237,12 +237,12 @@ class Api(models.Model):
 
 class Router(models.Model):
     """
-    菜单管理
+    菜单管理 path、name、component、redirect、meta、children
     """
     type_choices = (
         (0, '目录'),
         (1, '页面'),
-        (2, '按钮')
+        (2, '权限')
     )
     system_choices = (
         (0, 'PC端'),
@@ -259,6 +259,8 @@ class Router(models.Model):
     redirect = models.CharField(max_length=150, null=True, blank=True, verbose_name='跳转路径')
     icon = models.CharField(max_length=60, null=True, blank=True, verbose_name='菜单图标')
     show = models.BooleanField(default=True, verbose_name='是否显示菜单')
+    # active_menu = models.CharField(max_length=100, verbose_name='访问该路由时,需要左侧菜单哪个目录高亮', null=True, blank=True)
+    # hide_children_InMenu = models.BooleanField(default=True, verbose_name='批量隐藏该菜单下的所有子路由')  # 与show不冲突，show是指定某个子菜单
     order_index = models.IntegerField(default=1000, verbose_name='排序')
     type = models.SmallIntegerField(choices=type_choices, default=0, verbose_name='类型')
     system = models.SmallIntegerField(choices=system_choices, default=0, verbose_name='系统')
@@ -282,6 +284,21 @@ class Router(models.Model):
         )
 
 
+# class Permission(models.Model):
+#     """
+#     权限模型
+#     """
+#     name = models.CharField(max_length=100, verbose_name="权限名称")
+#     code = models.CharField(max_length=100, unique=True, verbose_name="权限编码/标识")
+#     router = models.ForeignKey(Router, null=True, blank=True, on_delete=models.SET_NULL, related_name='permissions',
+#                                verbose_name='所属菜单')
+#     description = models.TextField(blank=True, null=True, verbose_name="权限描述")
+#
+#     class Meta:
+#         verbose_name = "权限"
+#         verbose_name_plural = verbose_name
+
+
 class Role(models.Model):
     """
         角色管理
@@ -294,6 +311,7 @@ class Role(models.Model):
     name = models.CharField(max_length=150, unique=True, verbose_name='角色名称')
     routers = models.ManyToManyField(Router, blank=True, verbose_name='菜单', related_name='roles',
                                      help_text='左侧菜单，用来控制显示还是不显示')
+    # permission = models.ManyToManyField(Permission, blank=True, verbose_name='拥有权限', related_name="permission_roles")
     # apis = models.ManyToManyField(Api, blank=True, verbose_name='API', related_name='api_roles',
     #                               help_text='用做开放给外部程序调用接口的授权，可不填！')
     keyword = models.CharField(max_length=228, null=True, blank=True, verbose_name='角色关键字')

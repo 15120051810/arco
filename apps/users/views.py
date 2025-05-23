@@ -114,17 +114,58 @@ class UserMenuView(APIView):
     2 非管理员 将该用户对应的菜单树与菜单列表返回
     """
 
-    queryset = Router.objects.all().order_by('order_index')
-    serializer_class = RouerTreeSerializer
     permission_classes = [IsAuthenticated]
 
-    def post(self, request):
-        if self.request.user.is_superuser:
-            queryset = Router.objects.filter(type__range=[0, 1], system=0).order_by('order_index').distinct()
-        else:
-            queryset = Router.objects.filter(type__range=[0, 1], system=0,
-                                             roles__role_users=self.request.user).distinct()
-        logger.info(f"查询的菜单数据集--> {queryset}")
+    def build_tree(self, queryset):
+        """
+        把扁平的 Router queryset 构造成树结构。
+        """
+        id_to_node = {}
+        tree = []
 
-        serializer = RouerTreeSerializer(instance=queryset, many=True)
-        return Response(data=serializer.data)
+        # 第一步：初始化每个节点的 children
+        for obj in queryset:
+            id_to_node[obj.id] = {
+                "id": obj.id,
+                "name": obj.name,
+                "redirect": obj.redirect,
+                "component": obj.component,
+                "meta": {
+                    "locale": obj.locale_title,
+                    "icon": obj.icon,
+                    "hideInMenu": not obj.show,
+                    "order": obj.order_index,
+                    "roles": [r.name for r in obj.roles.all()],
+                },
+                "children": [],
+                "parent_id": obj.parent_id,
+            }
+        print('id_to_node', id_to_node)
+        # 第二步：组装树
+        for node in id_to_node.values():
+            parent_id = node["parent_id"]
+            if parent_id and parent_id in id_to_node:
+                print('parent_id', parent_id)
+                id_to_node[parent_id]["children"].append(node)
+            else:
+                tree.append(node)  # 根节点
+
+        return tree
+
+    @viewlog('V', '获取当前菜单树')
+    def post(self, request):
+        if self.request.user.is_superuser:  # 超级用户可以看所有菜单
+            queryset = Router.objects.filter(parent__isnull=True, system=0).order_by('order_index').distinct()
+            serializer = RouerTreeSerializer(instance=queryset, many=True)
+            return Response(data=serializer.data)
+        else:  # 其余用户基于所属角色，查询自己能看到的菜单。1 如果某个角色，只勾选了某个目录下的页面，该目录是办勾选状态，也要将该目录菜单返回 2 包含多个层级
+            # Router <--(related_name='roles')-- Role <--(related_name='role_users')-- User
+            # 可以像字典一样链式下去：A.objects.filter(B__C__D=value)。
+
+            # 查出所有已勾选的 的目录和页面，生成路由树返回给前端
+            queryset = Router.objects.filter(type__in=[0, 1], system=0,
+                                             roles__role_users=self.request.user).prefetch_related('children').order_by(
+                'order_index')
+            print('queryset', queryset)
+            tree = self.build_tree(queryset)
+            return Response(data=tree)

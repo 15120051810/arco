@@ -260,3 +260,49 @@ DEFAULT_LAYOUT(<NavBar />，<Menu/>，PageLayout(</router-view>))
 ```
 
 
+
+### 页面展示 什么样的菜单树？
+
+#### 原理
+
+1. 前端配置了所有路由 
+2. 后端返回能看到哪些菜单树 
+3. 前端去遍历后端返回的菜单树，后端返回的 name companent 具体啥时候能用上？
+4. 即使访问一个存在的路由，路由导航守卫也会去看他在不在服务端的菜单中，在的话，才可以看。
+
+#### 代码实现
+
+1. 页面渲染 `/src/components/menu/index.vue` , 通过执行该函数`renderSubMenu()`渲染出菜单。
+
+2. 该函数 `renderSubMenu()` 利用到了 `menuTree` 该变量来自 `/src/components/menu/use-menu-tree.ts` 中的 `useMenuTree()`
+
+3. 该函数`useMenuTree()` 又读取了 `appRoute`, 该变量就是关键。
+
+   - 菜单来自于前端静态写的 `appClientMenus` 由`保护登录页`，`404` ，`登录页` `模块页` 整合后的一个列表
+   - 菜单来自于后端获取 `appStore.appAsyncMenus` 只有 `模块页`
+
+
+   ```html
+   const appClientMenus = mixinRoutes.map((el) => {
+     const { name, path, meta, redirect, children } = el;
+     return {
+       name, // 路由名称
+       path, // 路由路径 
+       meta, // 路由元数据 （如是否需要认证，是否在菜单栏中显示等）
+       redirect, // 路由重定向路径
+       children, // 子路由
+     };
+   });
+   ```
+   
+   ```html
+     const appRoute = computed(() => { //  是一个计算属性，根据 appStore.menuFromServer 的值返回从服务端或者本地 获取菜单数据
+       if (appStore.menuFromServer) {
+         console.log(filePath,'从后端获取菜单树-->',appStore.appAsyncMenus)
+         // console.log(filePath,'后端菜单 追加 前端菜单')
+         return appStore.appAsyncMenus;
+       }
+       console.log(filePath, '从前端获取菜单树-->',appClientMenus)
+       return appClientMenus;
+     });
+   ```

@@ -15,7 +15,7 @@ from django.http import JsonResponse
 
 
 class CheckTokenMiddleware(MiddlewareMixin):
-
+    """校验token中间件"""
     def process_request(self, request):
         """
         处理请求前

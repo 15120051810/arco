@@ -41,15 +41,16 @@ class RouerTreeSerializer(serializers.ModelSerializer):
     """菜单树序列化器"""
     children = serializers.SerializerMethodField()
     name = serializers.SerializerMethodField()
-
+    path = serializers.CharField(source='redirect')
     key = serializers.SerializerMethodField()
     parent = serializers.SlugRelatedField(slug_field='id', queryset=Router.objects.all(), allow_null=True,
                                           required=False)
+    meta = serializers.SerializerMethodField()
 
     class Meta:
         model = Router
         depth = 1
-        exclude = ('created_at', 'updated_at')
+        exclude = ('created_at', 'updated_at', 'redirect', 'locale_title', 'order_index', 'show', 'icon')
 
     def get_children(self, obj):
         """递归获取子节点"""
@@ -66,3 +67,9 @@ class RouerTreeSerializer(serializers.ModelSerializer):
 
     def get_name(self, obj):
         return obj.name
+
+    def get_meta(self, obj: Router):
+        meta_info = {'locale': obj.locale_title, 'hideInMenu': not obj.show, 'order': obj.order_index, 'icon': obj.icon,
+                     'roles': [role.keyword for role in obj.roles.all()]}
+
+        return meta_info

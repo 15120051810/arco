@@ -6,5 +6,6 @@ pygments==2.9.0
 snowland-smx==0.3.1
 django-redis==5.4.0
 redis==5.0.4
+colorlog==6.9.0
 django-filter==21.1
 djangorestframework-simplejwt==5.3.1

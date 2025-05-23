@@ -25,7 +25,7 @@ class RouterTreeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Router
         depth = 1
-        exclude = ('created_at', 'updated_at', 'icon')
+        exclude = ('created_at', 'updated_at')
 
     def get_children(self, obj):
         """递归获取子节点"""
