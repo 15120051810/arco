@@ -23,5 +23,3 @@
 
 
 
-前端：https://github.com/15120051810/arco_front
-后端：https://github.com/15120051810/arco_front  
