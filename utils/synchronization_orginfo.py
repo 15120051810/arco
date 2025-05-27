@@ -19,8 +19,8 @@ redis_cli = get_redis_connection('default')
 IMPALA = {
     'host': '172.16.99.3',
     'port': 27009,
-    'user': 'bda_lscj',
-    'password': '74889D03350D0751',
+    'user': '*******',
+    'password': '********',
 }
 
 log_path = os.path.abspath(os.path.join(__file__, '../logs/synchronization_orginfo.log'))

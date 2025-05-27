@@ -21,8 +21,8 @@ from log.models import ViewLog
 from system_manage.org_manage_serializers import OrgTreeSerializer
 from datetime import datetime, timedelta
 
-BASE_KEYWORD = "big_data_app_product"
-USER_DEFAULT_PASSWORD = 'Miao13456'
+BASE_KEYWORD = "*********"
+USER_DEFAULT_PASSWORD = '************'
 
 logger = logging.getLogger("arco")
 
