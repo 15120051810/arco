@@ -249,7 +249,7 @@ class Router(models.Model):
         (1, '移动端'),
     )
     name = models.CharField(max_length=100, verbose_name='路由唯一名称', help_text='用来拼接path', null=True,
-                            blank=True)
+                            blank=True) # 要跟前端路由name一样，用于展开菜单的时候要用到该字段
     title = models.CharField(max_length=255, verbose_name='菜单名称', help_text='显示的菜单名称')
     locale_title = models.CharField(max_length=100, verbose_name='前端需要的双语配置', help_text='前端需要的双语配置',
                                     null=True,
