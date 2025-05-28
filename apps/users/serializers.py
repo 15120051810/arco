@@ -37,7 +37,7 @@ class UserSerializer(serializers.ModelSerializer):
         """用户->找到多个角色->多个角色找到菜单->多个菜单中，每个菜单有绑定多个权限关键字，将权限关键字全部返回"""
         # return [role.keyword for role in obj.roles.all()]  # 返回角色名称列表
         permission = Router.objects.filter(roles__role_users=obj, type=2)
-        data =  RouerFlattenSerializer(instance=permission, many=True).data  # 返回角色名称列表
+        data = RouerFlattenSerializer(instance=permission, many=True).data  # 返回角色名称列表
         names = [item['keyword'] for item in data]
         return names
 
@@ -62,8 +62,7 @@ class RouerTreeSerializer(serializers.ModelSerializer):
         children = obj.children.all()
         if not children.exists():
             return []  # 没有子节点时直接返回
-
-        # 递归调用子节点的序列化器
+        children = obj.children.exclude(type=2).order_by('order_index')  # 排除权限，否则前段读取{t(element?.meta?.locale || '')} 报警告
         return RouerTreeSerializer(children, many=True).data
 
     def get_key(self, obj):

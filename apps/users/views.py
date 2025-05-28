@@ -42,7 +42,7 @@ class UserLoginView(TokenObtainPairView):
     def post(self, request: Request, *args, **kwargs) -> Response:
 
         serializer = self.get_serializer(data=request.data)
-        # print('serializer', serializer)
+        logger.info(f'serializer-->{serializer}')
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -68,7 +68,7 @@ class UserInfoView(APIView):
     def get(self, request: Request, *args, **kwargs) -> Response:
 
         user_obj = request.user
-        logger.info(f"获取当前请求的用户对象 {user_obj} ")
+        # logger.info(f"获取当前请求的用户对象 {user_obj} ")
 
         try:
 
