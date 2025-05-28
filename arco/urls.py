@@ -34,6 +34,7 @@ urlpatterns = [
     # path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 
     path('api/', include('arco_demo.urls')),  # Vue3案例后端
+    path('api/', include('table.urls')),  # 表格
     path('api/', include('users.urls', namespace="user")),
     path('api/system_manage/', include("system_manage.urls", namespace="system_manage")),  # 系统管理
 

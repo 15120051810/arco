@@ -9,6 +9,7 @@ from django.db import models
 from users.models import Router
 from rest_framework import serializers
 
+
 class RouterFlattenSerializer(serializers.ModelSerializer):
     """为序列化使用，不用树形"""
 
@@ -25,12 +26,12 @@ class RouterTreeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Router
         depth = 1
-        exclude = ('created_at', 'updated_at')
+        exclude = ('created_at', 'updated_at', 'icon')
 
     def get_children(self, obj):
         """递归获取子节点"""
         children = obj.children.all()
-        if not children.exists():
+        if not children:
             return  # 没有子节点时直接返回
 
         # 递归调用子节点的序列化器

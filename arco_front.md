@@ -306,3 +306,7 @@ DEFAULT_LAYOUT(<NavBar />，<Menu/>，PageLayout(</router-view>))
        return appClientMenus;
      });
    ```
+
+### 登录成功后，后端只需要返回，能看到的菜单树，以及权限列表，前端开始展示，以及判断权限就行了
+
+### 即使第一次登录后，用户store已经填充值了，在刷新页面的时候，会重置store。

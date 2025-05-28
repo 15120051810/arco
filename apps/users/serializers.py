@@ -11,6 +11,15 @@ class RoleSerializer(serializers.ModelSerializer):
         fields = ["name"]
 
 
+class RouerFlattenSerializer(serializers.ModelSerializer):
+    """菜单铺平"""
+
+    class Meta:
+        model = Router
+        fields = ('keyword',)  # ✅只保留这些字段
+        # exclude = ('component', 'created_at', 'updated_at', 'redirect', 'locale_title', 'order_index', 'show', 'icon')
+
+
 class UserSerializer(serializers.ModelSerializer):
     # roles = RoleSerializer(many=True) # 前端登录后，将用户的角色信息返回过去，前端可以基于角色信息去展示不同内容
     role = serializers.SerializerMethodField()  # 自定义字段
@@ -26,15 +35,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_permission(self, obj) -> list:
         """用户->找到多个角色->多个角色找到菜单->多个菜单中，每个菜单有绑定多个权限关键字，将权限关键字全部返回"""
-        return [role.keyword for role in obj.roles.all()]  # 返回角色名称列表
-
-
-class RouerFlattenSerializer(serializers.ModelSerializer):
-    """菜单铺平"""
-
-    class Meta:
-        model = Router
-        exclude = ('created_at',)
+        # return [role.keyword for role in obj.roles.all()]  # 返回角色名称列表
+        permission = Router.objects.filter(roles__role_users=obj, type=2)
+        data =  RouerFlattenSerializer(instance=permission, many=True).data  # 返回角色名称列表
+        names = [item['keyword'] for item in data]
+        return names
 
 
 class RouerTreeSerializer(serializers.ModelSerializer):

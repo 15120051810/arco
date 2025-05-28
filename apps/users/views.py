@@ -17,7 +17,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView
 )
 
-from users.serializers import RouerTreeSerializer
+from users.serializers import RouerTreeSerializer, RouerFlattenSerializer
 from system_manage.views import RouterViewSet
 from .serializers import UserSerializer
 from .models import Router
@@ -153,7 +153,7 @@ class UserMenuView(APIView):
         return tree
 
     @viewlog('V', '获取当前菜单树')
-    def post(self, request):
+    def get(self, request):
         if self.request.user.is_superuser:  # 超级用户可以看所有菜单
             queryset = Router.objects.filter(parent__isnull=True, system=0).order_by('order_index').distinct()
             serializer = RouerTreeSerializer(instance=queryset, many=True)
@@ -164,8 +164,29 @@ class UserMenuView(APIView):
 
             # 查出所有已勾选的 的目录和页面，生成路由树返回给前端
             queryset = Router.objects.filter(type__in=[0, 1], system=0,
-                                             roles__role_users=self.request.user).prefetch_related('children').order_by(
+                                             roles__role_users=self.request.user).order_by(
                 'order_index')
             print('queryset', queryset)
             tree = self.build_tree(queryset)
             return Response(data=tree)
+
+
+class UserPermissionView(APIView):
+    """
+    用户权限
+    1 超级用户 返回所有权限列表
+    2 非超级用户 返回指定角色下的列表
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    @viewlog('V', '获取当前权限列表')
+    def get(self, request):
+        if self.request.user.is_superuser:  # 超级用户可以看所有菜单
+            queryset = Router.objects.filter(type=2, system=0).order_by('order_index').distinct()
+        else:
+            # 查出所有已勾选的 的目录和页面，生成路由树返回给前端
+            queryset = Router.objects.filter(type=2, system=0, roles__role_users=self.request.user).distinct()
+
+        serializer = RouerFlattenSerializer(instance=queryset, many=True)
+        return Response(data=serializer.data)
