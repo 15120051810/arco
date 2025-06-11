@@ -96,7 +96,10 @@ class MyTokenObtainPairSerializer(TokenObtainSerializer):
         """
         try:
             super().validate(attrs)  # 必须验证，才可以有属性 user
-            refresh = self.get_token(self.user)
+            refresh = self.get_token(self.user)  # refresh 是一个对象，不是字符串，不能直接放进 JSON
+
+            # print('refresh', refresh, type(refresh),
+            #       dir(refresh))  # <class 'rest_framework_simplejwt.tokens.RefreshToken'>
 
             if api_settings.UPDATE_LAST_LOGIN:
                 update_last_login(None, self.user)
@@ -104,7 +107,7 @@ class MyTokenObtainPairSerializer(TokenObtainSerializer):
             data = {
                 'username': self.user.username,
                 'name': self.user.name,
-                'refreshToken': str(refresh),
+                'refresh': str(refresh),  # 如果不使用str返回  "detail": "Object of type RefreshToken is not JSON serializable"
                 'token': str(refresh.access_token)
             }
 

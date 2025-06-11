@@ -6,31 +6,104 @@
 """
 
 import logging
+import requests
+import json
+from django.conf import settings
 from rest_framework.mixins import ListModelMixin
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import generics, status
 from rest_framework.request import Request
-from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView
+    TokenObtainPairView,
+    TokenRefreshView
 )
-
+from utils.get_token import get_token_for_user
 from users.serializers import RouerTreeSerializer, RouerFlattenSerializer
-from system_manage.views import RouterViewSet
 from .serializers import UserSerializer
-from .models import Router
+from .models import Router, User, Role
 
 from utils.common import viewlog
 
 logger = logging.getLogger('arco')
 
 
+class CheckBaseTokenView(APIView):
+    """
+    Base后台跳转带过来的token，解析并获取用户信息。
+    """
+
+    permission_classes = ()
+    authentication_classes = ()
+
+    def post(self, request):
+        base_token = request.data.get("base_token")
+        logger.info(f"base_token ---> {base_token}")
+
+        response = requests.post(url=settings.BASE_CHECKTOKEN_URL,
+                                 data={"token": base_token, "keyword": settings.BASE_KEYWORD}, timeout=30)
+
+        # logger.info(f"response.content ---> {response.content}")
+        res_content = json.loads(response.content)
+        # logger.info(f"res_content ---> {res_content}")
+
+        username, real_name, email, staff_code, phone = list(
+            map(res_content["data"]["user"].get, ["username", "realname", "email", "staff_code", "phone"]))
+        logger.debug(
+            f"username, real_name, email, staff_code, phone ---> {username, real_name, email, staff_code, phone}")
+        app_list = res_content["data"].get("app_list")
+        logger.info(f"app_list ---> {app_list}")
+
+        user_obj = User.objects.filter(username=username).first()
+
+        if not user_obj:
+            user_obj = User.objects.create_user(username=username, name=real_name, email=email,
+                                                password=settings.USER_DEFAULT_PASSWORD, mobile=phone,
+                                                staff_code=staff_code)
+
+            role_obj = Role.objects.filter(name="普通用户").first()
+            user_obj.roles.add(role_obj.id)
+            user_obj.save()
+        else:
+            user_obj.staff_code = staff_code
+            user_obj.mobile = phone
+            user_obj.save()
+
+        _token = get_token_for_user(user_obj)
+
+        print('_token',_token)
+
+        router_o = {}
+        if user_obj.home_page_id:
+            router_obj = Router.objects.filter(id=user_obj.home_page_id, roles__role_users=user_obj).first()
+            if router_obj: router_o = {'name': router_obj.name, 'title': router_obj.title}
+
+        return Response({
+            # "app_list": app_list,
+            "username": username,
+            "router_obj": router_o,
+            "token": _token['token'],
+            "refresh": _token['refresh']
+        })
+
+
+class DestroyBaseTokenView(APIView):
+    """销毁BaseToken"""
+
+    def post(self, request):
+        base_token = request.data.get("base_token")
+        logger.info(f"base_token ---> {base_token}")
+
+        response = requests.post(url=settings.BASE_CHECKLOGOUT_URL, data={"token": base_token, "keyword": settings.BASE_KEYWORD},
+                                 timeout=30)
+        res_content = json.loads(response.content)
+        logger.info(f"销毁结果 ---> {res_content}")
+
+        return Response(res_content)
+
+
 class UserLoginView(TokenObtainPairView):
-    """
-    用户登录
-    """
     """
         用户登录，重写TokenObtainPairView
         为什么自定义接口在访问时，不提示未认证？
@@ -42,7 +115,7 @@ class UserLoginView(TokenObtainPairView):
     def post(self, request: Request, *args, **kwargs) -> Response:
 
         serializer = self.get_serializer(data=request.data)
-        logger.info(f'serializer-->{serializer}')
+        logger.info(f'自定义认证序列化器 libs.auth.MyTokenObtainPairSerializer-->{serializer}')
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -60,6 +133,14 @@ class UserLoginView(TokenObtainPairView):
 class UserInfoView(APIView):
     """
     用户信息
+    permission_classes = [IsAuthenticated] 你只要在视图里这样用就可以 不需要在写中间件再去校验了
+
+    DRF 收到请求后：
+    会执行 JWTAuthentication 类的 .authenticate() 方法；
+    该方法会解析 Authorization 头中的 token；
+    调用 Simple JWT 内部的 AccessToken() 进行解码 + 有效性检查；
+    解码成功 → 拿到 user_id → 加载用户 → 设置 request.user；
+    解码失败（过期/伪造） → 401 Unauthorized, 除非自己在 中间件中处理响应结果
     """
 
     serializer_class = UserSerializer
@@ -140,12 +221,12 @@ class UserMenuView(APIView):
                 "children": [],
                 "parent_id": obj.parent_id,
             }
-        print('id_to_node', id_to_node)
+        # print('id_to_node', id_to_node)
         # 第二步：组装树
         for node in id_to_node.values():
             parent_id = node["parent_id"]
             if parent_id and parent_id in id_to_node:
-                print('parent_id', parent_id)
+                # print('parent_id', parent_id)
                 id_to_node[parent_id]["children"].append(node)
             else:
                 tree.append(node)  # 根节点
@@ -166,7 +247,7 @@ class UserMenuView(APIView):
             queryset = Router.objects.filter(type__in=[0, 1], system=0,
                                              roles__role_users=self.request.user).order_by(
                 'order_index')
-            print('queryset', queryset)
+            # print('queryset', queryset)
             tree = self.build_tree(queryset)
             return Response(data=tree)
 

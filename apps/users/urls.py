@@ -9,8 +9,7 @@ from django.conf import settings
 from rest_framework.routers import SimpleRouter
 from rest_framework_extensions.routers import (ExtendedDefaultRouter as DefaultRouter)
 
-
-from .views import UserLoginView, UserInfoView, UserLoginOutView, UserMenuView,UserPermissionView
+from .views import UserLoginView, CheckBaseTokenView, UserInfoView, UserLoginOutView, UserMenuView, UserPermissionView
 
 app_name = "users"
 
@@ -18,6 +17,7 @@ router = DefaultRouter() if settings.DEBUG else SimpleRouter()
 
 urlpatterns = [
     path('user/login/', UserLoginView.as_view()),
+    path('user/skip_auth/', CheckBaseTokenView.as_view()),
     path('user/info/', UserInfoView.as_view()),
     path('user/menu/', UserMenuView.as_view()),
     path('user/permission/', UserPermissionView.as_view()),

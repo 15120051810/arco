@@ -62,11 +62,26 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'users.User'
 # CORS_ALLOW_ALL_ORIGINS = True # 这将允许来自任何源的请求，测试环境可以打开，但在生产环境中应该禁用。
 
+# 允许携带 Cookie
+CORS_ALLOW_CREDENTIALS = True
+
+# 不允许所有域名访问，明确指定允许的前端地址
+CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:6888",  # 你的前端开发服务器地址
-    "https://example.com",    # 你的生产环境地址
+    "https://example.com",  # 你的生产环境地址
 ]
 
+from corsheaders.defaults import default_headers
+
+# 允许发送的自定义请求头（大小写敏感！）没跑通
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "basetoken",         # 你自定义的 header
+    # "authorization",     # 如果你用 JWT 的话，必须加这个, 已经存在于default_headers了
+]
+
+# 请求 按列表顺序执行每个中间件的 __call__ → process_request、process_view
+# 响应 按相反顺序执行每个中间件的 process_response
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # 后端解决跨域 跨域放在中间件第一个 !!注释钓的话就不用解决跨域问题了
     'django.middleware.security.SecurityMiddleware',
@@ -133,7 +148,6 @@ TIME_ZONE = 'Asia/Shanghai'
 USE_I18N = True
 USE_TZ = False
 
-
 # propagate = True：
 # 日志会传递给 父 logger，如果父 logger 有 handler，会再输出一遍日志。
 #
@@ -147,7 +161,7 @@ LOGGING = {
         'arco': {
             'handlers': ['console', 'file'],
             'propagate': True,
-            'level': 'DEBUG', # 日志级别
+            'level': 'DEBUG',  # 日志级别
         },
         # 'django.db.backends': {
         #     'handlers': ['console', 'file'],  # 数据库的 日志记录
@@ -170,7 +184,7 @@ LOGGING = {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             # "formatter": "verbose",
-            "formatter": "color", # 选中带颜色的
+            "formatter": "color",  # 选中带颜色的
             'filters': ['add_username_ip'],
             # 'encoding': 'utf-8'  # 确保编码为 UTF-8
         },
@@ -191,7 +205,7 @@ LOGGING = {
             'backupCount': 10,
             'formatter': 'verbose',
             'filters': ['add_username_ip'],
-},
+        },
         'refresh_file': {
             'level': 'DEBUG',
             'class': 'logging.handlers.TimedRotatingFileHandler',
@@ -283,6 +297,8 @@ REST_FRAMEWORK = {
 ## 顶层机构名称
 TOP_ORG_NAME = '圆心科技'
 
+BASE_KEYWORD = "arco"
+USER_DEFAULT_PASSWORD = 'Miao13456'
 
 ############# 配置simpleJwt
 
@@ -290,9 +306,9 @@ TOP_ORG_NAME = '圆心科技'
 # 使用的是 双Token
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=7,seconds=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
-    "ROTATE_REFRESH_TOKENS": True,
+    "ACCESS_TOKEN_LIFETIME": timedelta(seconds=20),  # access 有效 1 小时
+    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=1),  # refresh 有效 7 天
+    "ROTATE_REFRESH_TOKENS": False,  # 是否每次刷新都换新的 refresh（建议设为 False）
     # 当设置为 时True，如果将刷新令牌提交给 TokenRefreshView，则将返回新的刷新令牌以及新的访问令牌。此新刷新令牌将通过 JSON 响应中的“refresh”键提供。
 
     "AUTH_HEADER_TYPES": ("Bearer",),  # 请求头要包含Bearer
@@ -301,7 +317,7 @@ SIMPLE_JWT = {
     # 当设置为 时True，auth_user 表中的 last_login 字段会在登录时更新（TokenObtainPairView）。
     "UPDATE_LAST_LOGIN": True,
 
-    "BLACKLIST_AFTER_ROTATION": True,
+    "BLACKLIST_AFTER_ROTATION": True,  # 是否把旧 refresh 加黑名单（只有前者为 True 时有效）
 
     # 默认的 认证登录返回的序列化数据
     # "TOKEN_OBTAIN_SERIALIZER": "rest_framework_simplejwt.serializers.TokenObtainPairSerializer",

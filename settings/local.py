@@ -31,3 +31,8 @@ CACHES = {
         },
     }
 }
+
+# base后台token的 校验与登出
+# BASE_CHECKTOKEN_URL = "http://test-admin-base-api.miaoshou.com/api/system/checkToken"
+BASE_CHECKTOKEN_URL = "https://test-admin-base-api.miaoshou.com/api/system/getBigDataAppList"
+BASE_CHECKLOGOUT_URL = "https://test-admin-base-api.miaoshou.com/api/system/checkLogOut"

@@ -26,10 +26,10 @@ urlpatterns = [
     # DRF 提供的一系列身份认证的接口，用于在页面中认证身份，详情查阅DRF文档
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 
-    # 获取Token的接口
+    # simple-jwt 默认的获取Token的接口  刷新 以及验证
     # path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     # 刷新Token有效期的接口
-    # path('api/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     # 验证Token的有效性
     # path('api/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 
