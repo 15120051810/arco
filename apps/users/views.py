@@ -88,19 +88,19 @@ class CheckBaseTokenView(APIView):
         })
 
 
-class DestroyBaseTokenView(APIView):
-    """销毁BaseToken"""
-
-    def post(self, request):
-        base_token = request.data.get("base_token")
-        logger.info(f"base_token ---> {base_token}")
-
-        response = requests.post(url=settings.BASE_CHECKLOGOUT_URL, data={"token": base_token, "keyword": settings.BASE_KEYWORD},
-                                 timeout=30)
-        res_content = json.loads(response.content)
-        logger.info(f"销毁结果 ---> {res_content}")
-
-        return Response(res_content)
+# class DestroyBaseTokenView(APIView):
+#     """销毁BaseToken"""
+#
+#     def post(self, request):
+#         base_token = request.data.get("base_token")
+#         logger.info(f"base_token ---> {base_token}")
+#
+#         response = requests.post(url=settings.BASE_CHECKLOGOUT_URL, data={"token": base_token, "keyword": settings.BASE_KEYWORD},
+#                                  timeout=30)
+#         res_content = json.loads(response.content)
+#         logger.info(f"销毁结果 ---> {res_content}")
+#
+#         return Response(res_content)
 
 
 class UserLoginView(TokenObtainPairView):
@@ -169,23 +169,19 @@ class UserInfoView(APIView):
 
 class UserLoginOutView(APIView):
     """
-    用户退出
+    用户退出-销毁所有tokn
     """
 
     def post(self, request):
-        """
-        """
-        data = request.data
-        logger.info(f"前端传参~ {data}")
+        base_token = request.data.get("base_token")
+        logger.info(f"base_token ---> {base_token}")
 
-        res = {
-            "data": None,
-            "status": 'ok',
-            "msg": '请求成功',
-            "code": 20000,
-        }
+        response = requests.post(url=settings.BASE_CHECKLOGOUT_URL, data={"token": base_token, "keyword": settings.BASE_KEYWORD},
+                                 timeout=30)
+        res_content = json.loads(response.content)
+        logger.info(f"销毁结果 ---> {res_content}")
 
-        return Response(data=res)
+        return Response(res_content)
 
 
 class UserMenuView(APIView):

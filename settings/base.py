@@ -92,6 +92,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     # 如果有其他依赖于用户身份验证的中间件，它们应该在你的自定义中间件之后执行
+    # 下面这两中间件顺序，会影响刚base后台刚跳进来，日志名字的记录
     'middlemares.token_middleware.CheckTokenMiddleware',  # 添加中间件
     'middlemares.log_middleware.ThreadLocalMiddleware',  # 线程日志过滤器
 
@@ -306,8 +307,8 @@ USER_DEFAULT_PASSWORD = 'Miao13456'
 # 使用的是 双Token
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(seconds=20),  # access 有效 1 小时
-    "REFRESH_TOKEN_LIFETIME": timedelta(minutes=1),  # refresh 有效 7 天
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=20),  # access 有效 1 小时
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),  # refresh 有效 7 天
     "ROTATE_REFRESH_TOKENS": False,  # 是否每次刷新都换新的 refresh（建议设为 False）
     # 当设置为 时True，如果将刷新令牌提交给 TokenRefreshView，则将返回新的刷新令牌以及新的访问令牌。此新刷新令牌将通过 JSON 响应中的“refresh”键提供。
 

@@ -9,7 +9,8 @@ from django.conf import settings
 from rest_framework.routers import SimpleRouter
 from rest_framework_extensions.routers import (ExtendedDefaultRouter as DefaultRouter)
 
-from .views import UserLoginView, CheckBaseTokenView, UserInfoView, UserLoginOutView, UserMenuView, UserPermissionView
+from .views import UserLoginView, CheckBaseTokenView, UserInfoView, UserLoginOutView, \
+    UserMenuView, UserPermissionView
 
 app_name = "users"
 
