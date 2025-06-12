@@ -42,6 +42,13 @@ class CheckTokenMiddleware(MiddlewareMixin):
             except (TokenError, InvalidToken):
                 data = {'code': '300', 'msg': '校验base_token时失败'}
                 return JsonResponse(data=data, status=status.HTTP_202_ACCEPTED)
+        else:
+            data = {'code': '401', 'msg': '请携带base_token'}
+            logger.warning(f"请从base后台进入.....")
+            # raise Exception('请从base后台进入') # 会被process_exception拦截
+            # status.HTTP_401_UNAUTHORIZED  为什么 401 响应被浏览器拦截，403 可以，还有有关预检请求，gpt文档 跨域请求中前端收不到 401 响应，但 403 响应能收到？
+            return JsonResponse(data=data, status=status.HTTP_403_FORBIDDEN)
+
         return None
 
     def process_view(self, request, view_func, view_args, view_kwargs):
@@ -66,10 +73,10 @@ class CheckTokenMiddleware(MiddlewareMixin):
             "detail": str(exception)
         }, status=500)
 
-    def process_response(self, request, response):
-        """返回前，可做日志、包装返回体等"""
-        logger.info(f"响应状态: {response.status_code} | 路径: {request.path}")
-        return response
+    # def process_response(self, request, response):
+    #     """返回前，可做日志、包装返回体等"""
+    #     logger.info(f"响应状态: {response.status_code} | 路径: {request.path}")
+    #     return response
 
     def get_client_ip(self, request):
         # 获取客户端 IP
