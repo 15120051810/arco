@@ -29,8 +29,14 @@ class CheckTokenMiddleware(MiddlewareMixin):
         """
         # print("Request is being processed")
 
+
+
         auth_header_base_token = request.headers.get('BaseToken')
-        logger.info(f"auth_header_base_token_--->{auth_header_base_token}")
+        logger.info(f"auth_header_base_token_--->{auth_header_base_token} {request.path}")
+
+        if '/api/user/skip_auth/' in request.path and not auth_header_base_token : # 第一次从后台跳进来的时候 请求头啥也没 跳过
+            return None
+
         if auth_header_base_token:
             try:
                 res = requests.post(url=settings.BASE_CHECKTOKEN_URL,

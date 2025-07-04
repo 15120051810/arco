@@ -39,7 +39,7 @@ class CheckBaseTokenView(APIView):
 
     def post(self, request):
         base_token = request.data.get("base_token")
-        logger.info(f"base_token ---> {base_token}")
+        logger.info(f"base_token123 ---> {base_token}")
 
         response = requests.post(url=settings.BASE_CHECKTOKEN_URL,
                                  data={"token": base_token, "keyword": settings.BASE_KEYWORD}, timeout=30)
